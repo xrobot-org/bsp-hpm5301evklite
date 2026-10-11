@@ -77,7 +77,7 @@ The configuration format is described in the [XRobot documentation](https://xrob
 
 ## 4. 构建 / Build
 
-构建需要 HPM SDK v1.13.0、CMake（3.23 或更高）、Ninja 和 HPM RISC-V GCC 工具链。环境变量 `HPM_SDK_BASE` 指向 SDK，`GNURISCV_TOOLCHAIN_PATH` 指向工具链目录。XRobot 为 1.0.0，与 `Modules/modules.yaml` 的 `xrobot:` 一致。
+构建需要 HPM SDK v1.13.0、CMake（3.23 或更高）、Ninja 和 HPM RISC-V GCC 工具链。环境变量 `HPM_SDK_BASE` 指向 SDK，`GNURISCV_TOOLCHAIN_PATH` 指向工具链目录。XRobot 为 1.0.1，与 `Modules/modules.yaml` 的 `xrobot:` 一致。
 
 ```bash
 git clone --recursive https://github.com/xrobot-org/bsp-hpm5301evklite.git
@@ -85,7 +85,7 @@ git clone --depth 1 --branch v1.13.0 https://github.com/hpmicro/hpm_sdk.git
 export HPM_SDK_BASE="$PWD/hpm_sdk"
 export GNURISCV_TOOLCHAIN_PATH=<工具链目录>
 cd bsp-hpm5301evklite
-pip install xrobot==1.0.0
+pip install xrobot==1.0.1
 xrobot setup
 cmake --preset debug-flash-xip
 cmake --build --preset debug-flash-xip
@@ -95,7 +95,7 @@ cmake --build --preset debug-flash-xip
 
 ```bash
 docker run --rm -v "$PWD:/src" -w /src ghcr.io/xrobot-org/docker-image-hpm:main \
-  bash -c 'pip install xrobot==1.0.0 && xrobot setup && cmake --preset debug-flash-xip && cmake --build --preset debug-flash-xip'
+  bash -c 'pip install xrobot==1.0.1 && xrobot setup && cmake --preset debug-flash-xip && cmake --build --preset debug-flash-xip'
 ```
 
 `xrobot setup` 拉取模块、检查配置并生成 `User/xrobot_main.hpp`。预设如下，每个预设的构建目录是 `build/<预设名>/`，产物为其中的 `output/demo.elf` 和 `output/demo.bin`，例如 `build/release-flash-xip/output/demo.elf`。
@@ -110,7 +110,7 @@ docker run --rm -v "$PWD:/src" -w /src ghcr.io/xrobot-org/docker-image-hpm:main 
 
 `.github/workflows/build.yml` 在上述镜像中检查配置格式、按 `xrobot.lock` 解析模块，并以 HPM SDK v1.13.0 构建三个预设。其中的 `libxr-master` 作业每天运行一次，把 `libxr/` 更新到 LibXR 的 `master` 后构建，作业失败不影响工作流结果。
 
-Building needs HPM SDK v1.13.0, CMake (3.23 or newer), Ninja and the HPM RISC-V GCC toolchain. The environment variable `HPM_SDK_BASE` points at the SDK and `GNURISCV_TOOLCHAIN_PATH` at the toolchain directory. XRobot is 1.0.0, matching `xrobot:` in `Modules/modules.yaml`. The image `ghcr.io/xrobot-org/docker-image-hpm:main` provides CMake, Ninja, Python, the toolchain and HPM SDK v1.13.0, with `HPM_SDK_BASE` and `GNURISCV_TOOLCHAIN_PATH` set, as in the commands above.
+Building needs HPM SDK v1.13.0, CMake (3.23 or newer), Ninja and the HPM RISC-V GCC toolchain. The environment variable `HPM_SDK_BASE` points at the SDK and `GNURISCV_TOOLCHAIN_PATH` at the toolchain directory. XRobot is 1.0.1, matching `xrobot:` in `Modules/modules.yaml`. The image `ghcr.io/xrobot-org/docker-image-hpm:main` provides CMake, Ninja, Python, the toolchain and HPM SDK v1.13.0, with `HPM_SDK_BASE` and `GNURISCV_TOOLCHAIN_PATH` set, as in the commands above.
 
 `xrobot setup` fetches the Modules, checks the configurations and generates `User/xrobot_main.hpp`. The presets are listed above; each builds in `build/<preset>/` and produces `output/demo.elf` and `output/demo.bin` there, for example `build/release-flash-xip/output/demo.elf`.
 
@@ -135,6 +135,34 @@ With the `flash_xip` presets the firmware executes from the on-board QSPI NOR fl
 引脚和时钟由 HPM Pinmux Tool 工程 `boards/hpm5301evklite/tool_config.hpmpc` 描述，`pinmux.c/h` 和 `clock.c/h` 是该工程导出的代码。BSP 的引脚都在 `init_bsp_pins()` 中；`board.c` 用 `init_board_clock()`、`init_board_clock_source()` 和 `init_uart0_clock()` 设置系统时钟和控制台，其余外设时钟由 `main.c` 逐个调用对应的 `init_*_clock()`。修改时在 [tools.hpmicro.com](https://tools.hpmicro.com/) 的 Pinmux Tool 中导入该工程，修改后导出工程文件和代码，用它们替换 `boards/hpm5301evklite/` 中的 `tool_config.hpmpc`、`pinmux.c/h` 和 `clock.c/h`，再重新构建；新增外设时钟函数时，同时在 `main.c` 中调用它。工程文件由工具校验，在工具之外编辑过的工程文件无法再导入。
 
 The pins and clocks are described by the HPM Pinmux Tool project `boards/hpm5301evklite/tool_config.hpmpc`; `pinmux.c/h` and `clock.c/h` are the code exported from it. The pins of the BSP are all in `init_bsp_pins()`. `board.c` sets up the system clocks and the console with `init_board_clock()`, `init_board_clock_source()` and `init_uart0_clock()`, and `main.c` calls the `init_*_clock()` function of each other peripheral. To change them, import the project into the Pinmux Tool at [tools.hpmicro.com](https://tools.hpmicro.com/), make the change, export the project file and the code, replace `tool_config.hpmpc`, `pinmux.c/h` and `clock.c/h` in `boards/hpm5301evklite/` with them, and build again; a new peripheral clock function is also called from `main.c`. The tool validates the project file; a project file edited outside the tool can no longer be imported.
+
+## 7. 官方 HPM 代码生成 / Official HPM code generation
+
+[HPM Peripheral Config](https://github.com/xrobot-org/hpm-peripheral-config) 的 GUI 正在开发中；
+截至本文更新时，其 CLI 后端重构仍处于 [Draft PR #1](https://github.com/xrobot-org/hpm-peripheral-config/pull/1)，
+不要把它当作已发布的正式工作流。正式代码生成链路以
+[xrobot-org/LibXR_CppCodeGenerator](https://github.com/xrobot-org/LibXR_CppCodeGenerator) 为准，
+当前发布版为 `libxr` 6.0.1，可通过 `pipx install libxr==6.0.1` 安装。
+
+当前官方 HPM 命令要求工程根目录包含 `app.yaml` 和 `main.c`，并在
+`boards/<board>/` 下放置唯一的 `.hpmpc` 文件。它会解析 Pinmux Tool 工程并生成
+`User/app_main.cpp`、`User/app_main.h` 和 `User/libxr_config.yaml`。本 BSP 使用 XRobot，
+因此应显式传入 `--xrobot`：
+
+```bash
+libxr hpm setup -d . --xrobot
+```
+
+本 BSP 的 `.hpmpc` 路径是 `boards/hpm5301evklite/tool_config.hpmpc`，符合该目录约定。
+在 `libxr` 6.0.1 中，生成器会为本工程生成 GPIO、I2C、Power、PWM 和 Timebase 对象；
+UART、SPI、MCAN 等已识别的 Pinmux 外设仍不会自动实例化。SPI/UART/CAN 需要在
+`User/app_main.cpp` 的用户代码区手工创建并注册对应的 LibXR/HPM 驱动，直到这些适配器
+进入官方生成链路。生成器实测成功后再运行 `xrobot setup` 和 CMake 构建。
+
+`hpm-peripheral-config` 的 GUI 和 CLI 后端重构仍处于
+[Draft PR #1](https://github.com/xrobot-org/hpm-peripheral-config/pull/1)，其 `xr_hpm_cfg`
+命令、外设行为 YAML 和个人 fork 不是本 BSP 的正式依赖。不要为此安装个人 fork，或把预览
+插件生成的文件当作官方 `libxr hpm setup` 的输出。
 
 ## 许可 / License
 
