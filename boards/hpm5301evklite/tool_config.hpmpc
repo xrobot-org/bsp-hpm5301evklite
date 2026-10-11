@@ -1,6 +1,6 @@
 {
-  "clientKey": "e7ee1b8eb71cbdfffc3236f8bf62fbdf",
-  "secretKey": "52c36fb76cad5cb9a878bcdee4400bc0",
+  "clientKey": "YOUR_CLIENT_KEY_HERE",
+  "secretKey": "YOUR_SECRET_KEY_HERE",
   "content": {
     "pid": "9497509b-eefd-4954-80df-5398d8aded77",
     "info": {
